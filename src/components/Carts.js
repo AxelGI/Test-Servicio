@@ -1,6 +1,7 @@
-// src/components/Cart.js
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import { db, auth } from '../firebase';
+import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 
@@ -104,77 +105,99 @@ const CheckoutForm = ({ totalPrice, cartItems, setPaymentSuccess }) => {
   );
 };
 
-const Cart = ({ cartItems, removeFromCart }) => {
-    const navigate = useNavigate();
-    const [checkout, setCheckout] = useState(false);
-    const [paymentSuccess, setPaymentSuccess] = useState(false);
-  
-    const totalPrice = cartItems.reduce((total, item) => total + item.precio, 0);
-  
-    const handleContinueShopping = () => {
-      navigate("/productos");
+const Cart = () => {
+  const [cartItems, setCartItems] = useState([]);
+  const [checkout, setCheckout] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const cartRef = collection(db, 'users', user.uid, 'cart');
+        const querySnapshot = await getDocs(cartRef);
+        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setCartItems(items);
+      }
     };
-  
-    const handleCheckout = () => {
-      setCheckout(true);
-    };
-  
-    return (
-      <div className="cart">
-        <h2>Carrito de Compras</h2>
-        {cartItems.length === 0 ? (
-          <div>
-            <p>El carrito está vacío.</p>
-            <button onClick={handleContinueShopping}>Seguir Comprando</button>
-          </div>
-        ) : checkout ? (
-          <Elements stripe={stripePromise}>
-            <CheckoutForm
-              totalPrice={totalPrice}
-              cartItems={cartItems}
-              setPaymentSuccess={setPaymentSuccess}
-            />
-          </Elements>
-        ) : paymentSuccess ? (
-          <div>
-            <h3>Ticket de compra</h3>
-            <p>Gracias por tu compra. Aquí está el resumen de tu pedido:</p>
-            <ul>
-              {cartItems.map((item) => (
-                <li key={item.id}>
-                  <p>{item.nombre} - {item.talla}</p>
-                  <p>Precio: ${item.precio}</p>
-                </li>
-              ))}
-            </ul>
-            <p>Total: ${totalPrice}</p>
-            <p>Nombre: {cartItems[0].name}</p>
-            <p>Celular: {cartItems[0].phone}</p>
-            <p>Dirección: {cartItems[0].address}</p>
-            <button onClick={handleContinueShopping}>Seguir Comprando</button>
-          </div>
-        ) : (
-          <div>
-            <ul>
-              {cartItems.map((item) => (
-                <li key={item.id}>
-                  <h3>{item.nombre}</h3>
-                  <p>Precio: ${item.precio}</p>
-                  {item.talla && <p>Talla: {item.talla}</p>}
-                  <button onClick={() => removeFromCart(item.id)}>Eliminar</button>
-                </li>
-              ))}
-            </ul>
-            <h3>Total: ${totalPrice}</h3>
-            <div className="cart-actions">
-              <button onClick={handleContinueShopping}>Seguir Comprando</button>
-              <button onClick={handleCheckout}>Pagar</button>
-            </div>
-          </div>
-        )}
-      </div>
-    );
+
+    fetchCartItems();
+  }, []);
+
+  const removeFromCart = async (itemId) => {
+    const user = auth.currentUser;
+    if (user) {
+      const cartItemRef = doc(db, 'users', user.uid, 'cart', itemId);
+      await deleteDoc(cartItemRef);
+      setCartItems((prevItems) => prevItems.filter(item => item.id !== itemId));
+    }
   };
-  
+
+  const totalPrice = cartItems.reduce((total, item) => total + item.precio * item.cantidad, 0);
+
+  const handleContinueShopping = () => {
+    navigate("/productos");
+  };
+
+  const handleCheckout = () => {
+    setCheckout(true);
+  };
+
+  return (
+    <div className="cart">
+      <h2>Carrito de Compras</h2>
+      {cartItems.length === 0 ? (
+        <div>
+          <p>El carrito está vacío.</p>
+          <button onClick={handleContinueShopping}>Seguir Comprando</button>
+        </div>
+      ) : checkout ? (
+        <Elements stripe={stripePromise}>
+          <CheckoutForm
+            totalPrice={totalPrice}
+            cartItems={cartItems}
+            setPaymentSuccess={setPaymentSuccess}
+          />
+        </Elements>
+      ) : paymentSuccess ? (
+        <div>
+          <h3>Ticket de compra</h3>
+          <p>Gracias por tu compra. Aquí está el resumen de tu pedido:</p>
+          <ul>
+            {cartItems.map((item) => (
+              <li key={item.id}>
+                <p>{item.nombre} - {item.talla}</p>
+                <p>Precio: ${item.precio}</p>
+                <p>Cantidad: {item.cantidad}</p>
+              </li>
+            ))}
+          </ul>
+          <p>Total: ${totalPrice}</p>
+          <button onClick={handleContinueShopping}>Seguir Comprando</button>
+        </div>
+      ) : (
+        <div>
+          <ul>
+            {cartItems.map((item) => (
+              <li key={item.id}>
+                <h3>{item.nombre}</h3>
+                <p>Precio: ${item.precio}</p>
+                {item.talla && <p>Talla: {item.talla}</p>}
+                <p>Cantidad: {item.cantidad}</p>
+                <button onClick={() => removeFromCart(item.id)}>Eliminar</button>
+              </li>
+            ))}
+          </ul>
+          <h3>Total: ${totalPrice}</h3>
+          <div className="cart-actions">
+            <button onClick={handleContinueShopping}>Seguir Comprando</button>
+            <button onClick={handleCheckout}>Pagar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default Cart;

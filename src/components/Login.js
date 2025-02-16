@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase"; // Asegúrate de importar db desde firebase
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -13,6 +14,18 @@ const Login = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Usuario logueado:", userCredential.user);
+
+      // Guardar el correo del usuario en Firestore si no existe
+      const user = userCredential.user;
+      const userRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+        });
+      }
+
       window.location.href = "/productos"; // Redirigir después del login
     } catch (error) {
       // Manejo de errores
