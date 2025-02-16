@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import { db, auth } from '../firebase';
-import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 
@@ -105,36 +103,12 @@ const CheckoutForm = ({ totalPrice, cartItems, setPaymentSuccess }) => {
   );
 };
 
-const Cart = () => {
-  const [cartItems, setCartItems] = useState([]);
+const Cart = ({ cartItems, removeFromCart }) => {
   const [checkout, setCheckout] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCartItems = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const cartRef = collection(db, 'users', user.uid, 'cart');
-        const querySnapshot = await getDocs(cartRef);
-        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setCartItems(items);
-      }
-    };
-
-    fetchCartItems();
-  }, []);
-
-  const removeFromCart = async (itemId) => {
-    const user = auth.currentUser;
-    if (user) {
-      const cartItemRef = doc(db, 'users', user.uid, 'cart', itemId);
-      await deleteDoc(cartItemRef);
-      setCartItems((prevItems) => prevItems.filter(item => item.id !== itemId));
-    }
-  };
-
-  const totalPrice = cartItems.reduce((total, item) => total + item.precio * item.cantidad, 0);
+  const totalPrice = cartItems.reduce((total, item) => total + item.precio, 0);
 
   const handleContinueShopping = () => {
     navigate("/productos");
@@ -169,7 +143,6 @@ const Cart = () => {
               <li key={item.id}>
                 <p>{item.nombre} - {item.talla}</p>
                 <p>Precio: ${item.precio}</p>
-                <p>Cantidad: {item.cantidad}</p>
               </li>
             ))}
           </ul>
@@ -184,7 +157,6 @@ const Cart = () => {
                 <h3>{item.nombre}</h3>
                 <p>Precio: ${item.precio}</p>
                 {item.talla && <p>Talla: {item.talla}</p>}
-                <p>Cantidad: {item.cantidad}</p>
                 <button onClick={() => removeFromCart(item.id)}>Eliminar</button>
               </li>
             ))}

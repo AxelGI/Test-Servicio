@@ -1,26 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { db, auth } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
 import './FloatingCarts.css';
 
-const FloatingCart = () => {
-  const [cartItems, setCartItems] = useState([]);
+const FloatingCart = ({ cartItems }) => {
   const location = useLocation();
 
-  useEffect(() => {
-    const fetchCartItems = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const cartRef = collection(db, 'users', user.uid, 'cart');
-        const querySnapshot = await getDocs(cartRef);
-        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setCartItems(items);
-      }
-    };
-
-    fetchCartItems();
-  }, []);
+  // Calcular la suma total de las cantidades
+  const totalQuantity = cartItems.reduce((total, item) => total + (item.cantidad || 1), 0);
 
   // Verifica si la ruta actual es /productos o /carrito
   const showFloatingCart = location.pathname === '/productos' || location.pathname === '/carrito';
@@ -33,7 +19,7 @@ const FloatingCart = () => {
     <div className="floating-cart">
       <Link to="/carrito">
         <button>
-          🛒 {cartItems.length}
+          🛒 {totalQuantity}
         </button>
       </Link>
     </div>

@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { auth, db } from './firebase';
+import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import Login from './components/Login';
 import Register from './components/Register';
 import Products from './components/Products';
@@ -10,25 +12,71 @@ import './App.css';
 function App() {
   const [cartItems, setCartItems] = useState([]);
 
-  // Función para agregar productos al carrito
-  const addToCart = (product, talla) => {
-    const productWithSize = { ...product, talla };
-
-    setCartItems((prevItems) => {
-      const existingProduct = prevItems.find(
-        (item) => item.id === productWithSize.id && item.talla === productWithSize.talla
-      );
-
-      if (existingProduct) {
-        return prevItems;
+  // Obtener los productos del carrito desde Firestore
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const cartRef = collection(db, 'users', user.uid, 'cart');
+        const querySnapshot = await getDocs(cartRef);
+        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setCartItems(items);
       }
+    };
 
-      return [...prevItems, productWithSize];
+    fetchCartItems();
+  }, []);
+
+  // Función para agregar productos al carrito
+  const addToCart = async (product) => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Debes iniciar sesión para agregar productos al carrito.');
+      return;
+    }
+
+    // Crear un ID único para cada combinación de producto y talla
+    const uniqueId = `${product.id}_${product.talla}`;
+
+    const cartRef = collection(db, 'users', user.uid, 'cart');
+    const cartItemRef = doc(cartRef, uniqueId);
+
+    // Agregar el producto al carrito en Firestore
+    await setDoc(cartItemRef, {
+      productId: product.id,
+      nombre: product.nombre,
+      precio: product.precio,
+      talla: product.talla,
+      imagen: product.imagen,
+      email: user.email,
     });
+
+    // Actualizar el estado local del carrito
+    setCartItems((prevItems) => [
+      ...prevItems,
+      {
+        id: uniqueId,
+        productId: product.id,
+        nombre: product.nombre,
+        precio: product.precio,
+        talla: product.talla,
+        imagen: product.imagen,
+      },
+    ]);
   };
 
   // Función para eliminar productos del carrito
-  const removeFromCart = (id) => {
+  const removeFromCart = async (id) => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Debes iniciar sesión para eliminar productos del carrito.');
+      return;
+    }
+
+    const cartItemRef = doc(db, 'users', user.uid, 'cart', id);
+    await deleteDoc(cartItemRef);
+
+    // Actualizar el estado local del carrito
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 
