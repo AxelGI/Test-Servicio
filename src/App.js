@@ -12,7 +12,6 @@ import './App.css';
 function App() {
   const [cartItems, setCartItems] = useState([]);
 
-  // Obtener los productos del carrito desde Firestore
   useEffect(() => {
     const fetchCartItems = async () => {
       const user = auth.currentUser;
@@ -27,7 +26,6 @@ function App() {
     fetchCartItems();
   }, []);
 
-  // Función para agregar productos al carrito
   const addToCart = async (product) => {
     const user = auth.currentUser;
     if (!user) {
@@ -35,13 +33,11 @@ function App() {
       return;
     }
 
-    // Crear un ID único para cada combinación de producto y talla
     const uniqueId = `${product.id}_${product.talla}`;
 
     const cartRef = collection(db, 'users', user.uid, 'cart');
     const cartItemRef = doc(cartRef, uniqueId);
 
-    // Agregar el producto al carrito en Firestore
     await setDoc(cartItemRef, {
       productId: product.id,
       nombre: product.nombre,
@@ -51,7 +47,6 @@ function App() {
       email: user.email,
     });
 
-    // Actualizar el estado local del carrito
     setCartItems((prevItems) => [
       ...prevItems,
       {
@@ -65,7 +60,6 @@ function App() {
     ]);
   };
 
-  // Función para eliminar productos del carrito
   const removeFromCart = async (id) => {
     const user = auth.currentUser;
     if (!user) {
@@ -76,7 +70,6 @@ function App() {
     const cartItemRef = doc(db, 'users', user.uid, 'cart', id);
     await deleteDoc(cartItemRef);
 
-    // Actualizar el estado local del carrito
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 

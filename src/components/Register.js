@@ -13,9 +13,8 @@ const Register = () => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log("Usuario registrado:", userCredential.user);
-      window.location.href = "/productos"; // Redirigir después del registro
+      window.location.href = "/productos"; 
     } catch (error) {
-      // Manejo de errores
       if (error.code === 'auth/email-already-in-use') {
         setError("Ya hay una cuenta registrada con este correo electrónico.");
       } else {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { auth, db } from "../firebase"; // Asegúrate de importar db desde firebase
+import { auth, db } from "../firebase"; 
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
@@ -15,7 +15,6 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Usuario logueado:", userCredential.user);
 
-      // Guardar el correo del usuario en Firestore si no existe
       const user = userCredential.user;
       const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
@@ -26,9 +25,8 @@ const Login = () => {
         });
       }
 
-      window.location.href = "/productos"; // Redirigir después del login
+      window.location.href = "/productos"; 
     } catch (error) {
-      // Manejo de errores
       if (error.code === 'auth/user-not-found') {
         setError("No hay ningún usuario registrado con este correo.");
       } else if (error.code === 'auth/wrong-password') {

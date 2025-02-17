@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../firebase';
-import { collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 
 const Products = ({ addToCart }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [selectedTalla, setSelectedTalla] = useState({});
+  const [selectedTalla, setSelectedTalla] = useState({}); 
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -27,7 +27,9 @@ const Products = ({ addToCart }) => {
   }, []);
 
   const handleAddToCart = async (product) => {
-    if (!selectedTalla[product.id]) {
+    const talla = selectedTalla[product.id];
+
+    if (!talla) {
       setMessage('Por favor, selecciona una talla para agregar al carrito.');
       setTimeout(() => setMessage(""), 3000);
       return;
@@ -40,12 +42,11 @@ const Products = ({ addToCart }) => {
       return;
     }
 
-    const productWithTalla = { ...product, talla: selectedTalla[product.id] };
+    const productWithTalla = { ...product, talla };
 
-    // Llamar a la función addToCart pasada como prop desde App.js
     addToCart(productWithTalla);
 
-    setMessage(`${product.nombre} (${selectedTalla[product.id]}) agregado al carrito!`);
+    setMessage(`${product.nombre} (${talla}) agregado al carrito!`);
     setTimeout(() => setMessage(""), 3000);
   };
 

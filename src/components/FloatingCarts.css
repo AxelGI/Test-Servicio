@@ -1,18 +1,18 @@
 /* src/components/FloatingCart.css */
 .floating-cart {
     position: fixed;
-    bottom: 20px; /* Ajusta la distancia desde el fondo */
-    right: 20px; /* Ajusta la distancia desde la derecha */
-    z-index: 1000; /* Asegúrate de que esté por encima de otros elementos */
+    bottom: 20px;
+    right: 20px; 
+    z-index: 1000; 
   }
   
   .floating-cart button {
-    background-color: #ff5722; /* Color de fondo del botón */
-    color: white; /* Color del texto */
-    border: none; /* Sin borde */
-    border-radius: 50%; /* Botón redondeado */
-    padding: 15px; /* Espaciado interno */
-    font-size: 20px; /* Tamaño de fuente */
-    cursor: pointer; /* Cambia el cursor al pasar el mouse */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para efecto flotante */
+    background-color: #ff5722;
+    color: white;
+    border: none; 
+    border-radius: 50%; 
+    padding: 15px;
+    font-size: 20px; 
+    cursor: pointer; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
   }
